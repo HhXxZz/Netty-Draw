@@ -1,0 +1,9 @@
+server:
+  port: 18111
+im:
+  server:
+    port: 8888
+    ip: 127.0.0.1
+  client:
+    port: 6667
+    ip: 127.0.0.1
