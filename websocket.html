@@ -1,0 +1,117 @@
+<!DOCTYPE HTML>
+<html>
+   <head>
+   <meta charset="utf-8">
+   <title>websocket</title>
+    
+      <script type="text/javascript">
+
+         // 打开一个 web socket
+         var ws = new WebSocket("ws://127.0.0.1:8888");
+          
+         ws.onopen = function(){
+            //alert("数据发送中...");
+         };
+         
+         ws.onmessage = function (evt) {
+            var resultData = JSON.parse(evt.data);
+            console.log(resultData);
+            var sendUserId = resultData.userId;
+            var type = resultData.type;
+            var data = resultData.data;
+            if(type == "im"){
+               var node=document.createElement("li"); //创建一个li节点
+               var item=document.createTextNode(data)//定义创建文本节点
+               node.appendChild(item); //把文本节点追加到li节点
+               document.getElementById("systemMsg").appendChild(node);//把li节点添加到ul中
+            }else if(type == "paint"){
+               var userId = document.getElementById("userId").value;
+               if(sendUserId != userId){
+                  var canvas = document.getElementById('canvas');
+      　          var canvas2d = canvas.getContext('2d');
+                  var paintData = data;
+                  var paintType = paintData.type;
+                  var xy = paintData.data;
+                  var x = xy.x;
+                  var y = xy.y;
+                  if(paintType == "move"){
+                     canvas2d.moveTo(x,y);
+                  }else if(paintType == "line"){
+                     canvas2d.lineTo(x,y);
+                     canvas2d.stroke();
+                  }
+               }
+            }
+         };
+          
+         ws.onclose = function(){ 
+            // 关闭 websocket
+            alert("连接已关闭..."); 
+         };
+           
+         function sendMsg(){
+             // Web Socket 已连接上，使用 send() 方法发送数据
+            var roomId = document.getElementById("roomId").value;
+            var userId = document.getElementById("userId").value;
+            var msg = document.getElementById("msg").value;
+            var data = {"im":{"userId":userId,"roomId":roomId,"msg":msg}};
+            ws.send(JSON.stringify(data));
+         }
+
+         function login(){
+            // Web Socket 已连接上，使用 send() 方法发送数据
+            var roomId = document.getElementById("roomId").value;
+            var userId = document.getElementById("userId").value;
+            var data = {"login":{"userId":userId,"roomId":roomId}};
+            ws.send(JSON. stringify(data));
+
+         }
+
+         
+
+      window.onload = function() {
+         var canvas = document.getElementById('canvas');
+      　 var canvas2d = canvas.getContext('2d');
+         
+         canvas.onmousedown = function(ev) {
+            var roomId = document.getElementById("roomId").value;
+            var userId = document.getElementById("userId").value;
+            
+            canvas2d.moveTo(ev.clientX-canvas.offsetLeft,ev.clientY-canvas.offsetTop);
+         
+            var data1 = {"type":"move","data":{"x":ev.clientX-canvas.offsetLeft,"y":ev.clientY-canvas.offsetTop}};
+            var data = {"paint":{"userId":userId,"roomId":roomId,"data":data1}};
+            ws.send(JSON.stringify(data));
+            document.onmousemove = function(ev) {
+               canvas2d.lineTo(ev.clientX-canvas.offsetLeft,ev.clientY-canvas.offsetTop);
+               var data2 = {"type":"line","data":{"x":ev.clientX-canvas.offsetLeft,"y":ev.clientY-canvas.offsetTop}};
+               var data = {"paint":{"userId":userId,"roomId":roomId,"data":data2}};
+               ws.send(JSON.stringify(data));
+               canvas2d.stroke();
+            };
+            canvas.onmouseup = function() {
+               document.onmousemove = null;
+               document.onmouseup = null;
+            };
+      　　};
+      };
+
+      </script>
+        
+   </head>
+   <body>
+
+         <canvas id="canvas" width="400px" height="400px" style="background: #EFFBF2;"></canvas><br/><br/>
+
+         房间号ID：<input type="text" id="roomId" name="roomId" /><br/><br/>
+         用户ID：<input type="text" id="userId" name="userId" /><br/><br/>
+
+
+         <button onclick="login()">登录</button><br/><br/>
+
+
+         <input type="text" id="msg" name="msg" /><button onclick="sendMsg()">发送</button><br/><br/>
+         房间消息：<ul id="systemMsg"></ul>
+
+   </body>
+</html>
